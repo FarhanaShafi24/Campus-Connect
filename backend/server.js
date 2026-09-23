@@ -2,6 +2,7 @@ const express = require("express");
 const cors=require("cors");
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const initialEvents = [
   {
@@ -62,7 +63,14 @@ app.delete("/api/events/:id",(req,res)=>{
         message:"Event Deleted Successfully"
     })
 })
-
+    app.post("/api/events",(req,res)=>{
+        const newEvent = req.body;
+        initialEvents.push(newEvent);
+        res.json({
+            message:"Event Added Successfully",
+            event:newEvent
+        });
+    });
 
 
 app.listen(5000,()=>{
