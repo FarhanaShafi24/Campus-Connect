@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-function EventForm({ onAddEvent, editingEvent = null }) {
+function EventForm({ onAddEvent, editingEvent, onUpdateEvent, }) {
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -10,80 +10,75 @@ function EventForm({ onAddEvent, editingEvent = null }) {
     description: "",
   });
 
-  const [formError, setFormError] = useState("");
-
-  useEffect(function () {
-    // If there is no event being edited, keep the form empty
-    if (!editingEvent) {
+  useEffect(function(){
+    if(editingEvent !== null){
       setFormData({
-        title: "",
-        category: "",
-        date: "",
-        time: "",
-        location: "",
-        description: "",
+        title: editingEvent.title,
+        category: editingEvent.category,
+        date: new Date(editingEvent.date).toISOString().split("T")[0],
+        time: new Date(`1970-01-01 ${editingEvent.time}`)
+          .toTimeString()
+          .slice(0, 5),
+        location: editingEvent.location,
+        description: editingEvent.description,
       });
-      return;
     }
-
-    // Fill the form with the event being edited
-    setFormData({
-      title: editingEvent.title || "",
-      category: editingEvent.category || "",
-      date: editingEvent.date
-        ? new Date(editingEvent.date).toISOString().split("T")[0]
-        : "",
-      time: editingEvent.time || "",
-      location: editingEvent.location || "",
-      description: editingEvent.description || "",
-    });
-
-    setFormError("");
   }, [editingEvent]);
+
+  const [formError, setFormError] = useState("");
 
   function handleChange(event) {
     const inputName = event.target.name;
     const inputValue = event.target.value;
 
-    setFormData(function (previousData) {
-      return {
-        ...previousData,
-        [inputName]: inputValue,
-      };
+    setFormData({
+      ...formData,
+      [inputName]: inputValue,
     });
-
-    setFormError("");
   }
 
   function handleSubmit(event) {
     event.preventDefault();
 
     if (
-      formData.title.trim() === "" ||
+      formData.title === "" ||
       formData.category === "" ||
       formData.date === "" ||
       formData.time === "" ||
-      formData.location.trim() === "" ||
-      formData.description.trim() === ""
+      formData.location === "" ||
+      formData.description === ""
     ) {
       setFormError("Please fill in every field.");
       return;
     }
 
-    const newEvent = {
-      id:
-        editingEvent && editingEvent.id
-          ? editingEvent.id
-          : Date.now(),
-      title: formData.title,
-      category: formData.category,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      description: formData.description,
-    };
+    if (editingEvent !== null) {
+      const updatedEvent = {
+        id: editingEvent.id,
+        title: formData.title,
+        category: formData.category,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        description: formData.description,
+      };
 
-    onAddEvent(newEvent);
+      onUpdateEvent(updatedEvent);
+    } else {
+      const newEvent = {
+        id: Date.now(),
+        title: formData.title,
+        category: formData.category,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        description: formData.description,
+      };
+
+      onAddEvent(newEvent);
+    }
+
+    // onAddEvent(newEvent);
 
     setFormData({
       title: "",
@@ -97,31 +92,25 @@ function EventForm({ onAddEvent, editingEvent = null }) {
     setFormError("");
   }
 
-  const isEditing = editingEvent !== null && editingEvent !== undefined;
-
   return (
     <section className="event-form-section">
       <p className="section-label">
-        {isEditing ? "Update Activity" : "Create Activity"}
+        {editingEvent !== null ? "Update Activity" : "Create Activity"}
       </p>
 
-      <h2>
-        {isEditing
-          ? "Edit Campus Event"
-          : "Add New Campus Event"}
-      </h2>
+      <h2>{editingEvent !== null ? "Edit Campus Event" : "Add a New Campus Event"}</h2>
 
       <form className="event-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Event Title</label>
 
           <input
-            type="text"
             id="title"
             name="title"
+            type="text"
             value={formData.title}
             onChange={handleChange}
-            placeholder="Enter event title"
+            placeholder="Example: React Workshop"
           />
         </div>
 
@@ -134,7 +123,7 @@ function EventForm({ onAddEvent, editingEvent = null }) {
             value={formData.category}
             onChange={handleChange}
           >
-            <option value="">Select category</option>
+            <option value="">Select a category</option>
             <option value="Technology">Technology</option>
             <option value="Sports">Sports</option>
             <option value="Cultural">Cultural</option>
@@ -147,9 +136,9 @@ function EventForm({ onAddEvent, editingEvent = null }) {
           <label htmlFor="date">Date</label>
 
           <input
-            type="date"
             id="date"
             name="date"
+            type="date"
             value={formData.date}
             onChange={handleChange}
           />
@@ -159,28 +148,28 @@ function EventForm({ onAddEvent, editingEvent = null }) {
           <label htmlFor="time">Time</label>
 
           <input
-            type="time"
             id="time"
             name="time"
+            type="time"
             value={formData.time}
             onChange={handleChange}
           />
         </div>
 
-        <div className="form-group">
+        <div className="form-group full-width">
           <label htmlFor="location">Location</label>
 
           <input
-            type="text"
             id="location"
             name="location"
+            type="text"
             value={formData.location}
             onChange={handleChange}
-            placeholder="Enter event location"
+            placeholder="Example: Seminar Hall"
           />
         </div>
 
-        <div className="form-group">
+        <div className="form-group full-width">
           <label htmlFor="description">Description</label>
 
           <textarea
@@ -188,22 +177,14 @@ function EventForm({ onAddEvent, editingEvent = null }) {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Enter event description"
-            rows="4"
-          ></textarea>
+            placeholder="Describe the event"
+          />
         </div>
 
-        {formError && (
-          <p className="form-error">
-            {formError}
-          </p>
-        )}
+        {formError !== "" && <p className="form-error">{formError}</p>}
 
-        <button
-          className="submit-button"
-          type="submit"
-        >
-          {isEditing ? "Update Event" : "Add Event"}
+        <button className="submit-button" type="submit">
+          {editingEvent !==null ? "Update Event" : "Add Event"}
         </button>
       </form>
     </section>
