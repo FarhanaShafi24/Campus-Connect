@@ -17,39 +17,6 @@ mongoose.connect(process.env.MONGODB_URI)
 console.log("MongoDB connection Error" , error);
 });
 
-const initialEvents = [
-  {
-    id: 1,
-    title: "MERN Stack Workshop",
-    category: "Technology",
-    date: "25 September 2026",
-    time: "10:00 AM",
-    location: "Computer Lab 1",
-    description:
-      "Learn the basics of MongoDB, Express, React, and Node.js through a practical workshop.",
-  },
-  {
-    id: 2,
-    title: "College Hackathon",
-    category: "Technology",
-    date: "28 September 2026",
-    time: "9:00 AM",
-    location: "Main Auditorium",
-    description:
-      "Form a team, solve a real problem, and present your solution to mentors.",
-  },
-  {
-    id: 3,
-    title: "Photography Club Meet",
-    category: "Club",
-    date: "30 September 2026",
-    time: "2:00 PM",
-    location: "Seminar Hall",
-    description:
-      "Meet fellow photography enthusiasts and learn basic composition techniques.",
-  },
-];
-
 app.get("/",(req,res)=>{
     res.send("Backend is working!");
 })
@@ -59,20 +26,16 @@ app.get("/api/events", async (req,res)=>{
     res.json(events);
 })
 
-app.delete("/api/events/:id",(req,res)=>{
-    const eventId=Number(req.params.id);
-    const eventIndex=initialEvents.findIndex(function(event){
-        return event.id === eventId;
-    });
-
-    if(eventIndex === -1){
-        return res.status(404).json({
-            message:"Event Not Found"
+app.delete("/api/events/:id", async (req,res)=>{
+    const deleteEvent = await Event.findByIdAndDelete(
+        req.params.id
+    )
+    if(!deleteEvent){
+        return res.status(101).json({
+            message:"Event not Found"
         });
     }
-
-    initialEvents.splice(eventIndex,1);
-
+    
     res.json({
         message:"Event Deleted Successfully"
     })
